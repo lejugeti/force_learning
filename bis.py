@@ -95,6 +95,22 @@ def update_activity(x, y, z, sigma, rho, beta):
     
     return d_x(x,y), d_y(x, y, z), d_z(x, y, z)
 
+
+def lorenz(time):
+    x = np.zeros(len(time))
+    y = np.zeros(len(time))
+    z = np.zeros(len(time))
+    
+    x[0], y[0], z[0] = np.random.normal(), np.random.normal(), np.random.normal()
+    sigma = 10
+    rho = 28
+    beta = 8/3
+    
+    for i in time[1:]:
+        x[i], y[i], z[i] = update_activity(x[i-1],y[i-1],z[i-1], sigma, rho, beta)
+    
+    return x
+
 def sinus(t):
     A = 10
     return A*np.sin(t*(np.pi*2)/400)
@@ -120,11 +136,13 @@ time = np.arange(TOTAL_TIME)
 #the two ws
 Jg = np.random.normal(0, 1/np.sqrt(n_neuron),size=(n_neuron, n_neuron))
 Jz = np.random.uniform(-1, 1, size=n_neuron)
-w = np.zeros(n_neuron)
-#w= np.random.normal(0, 1/np.sqrt(1*n_neuron),size=n_neuron)
+#w = np.zeros(n_neuron)
+w= np.random.normal(0, 1/np.sqrt(1*n_neuron),size=n_neuron)
 
 
-target = sinus(time)
+#choose the target
+target = lorenz(time)
+#target = sinus(time)
 #target = np.array([np.sin(t/10) for t in time])
 #target = np.array([triangle(t) for t in time])  #desired output we want the model to mimic
 target = scaled(target)
@@ -133,8 +151,7 @@ target = scaled(target)
 #%% running 
 x = np.random.normal(size=n_neuron)
 
-save_x1 = []
-save_x2 = []
+save_x = np.zeros((5,TOTAL_TIME))
 
 all_w = []
 
@@ -144,8 +161,11 @@ z.append(compute_z(w, np.tanh(x)))
 
 learn_every = 5
 for i in time:
-    save_x1.append(x[0])
-    save_x2.append(x[1])
+    save_x[0,i] = x[0]
+    save_x[1,i] = x[1]
+    save_x[2,i] = x[2]
+    save_x[3,i] = x[3]
+    save_x[4,i] = x[4]
     
     x_old = x
     r_old = np.tanh(x_old)
@@ -157,7 +177,7 @@ for i in time:
     r = np.tanh(x)
     z.append(compute_z(w, r)) 
     
-    if TOTAL_TIME/1.5>i and i%learn_every==0:
+    if 5500>i>3000 and i%learn_every==0:
         e = error(w, r, f)
         errors.append(e)
         old_w = w
@@ -187,5 +207,15 @@ plt.xlabel("time")
 plt.ylabel("update amplitude of w")
 plt.show()
 
-  
+
+#%% plot of all activities
+
+increase = 0
+for i in range(5):
+    plt.plot(time, increase + scaled(save_x[i,:]))
+    increase += max(scaled(save_x[i,:])) +4
+plt.plot(time, increase+z[:-1]+5    , color="red")
+plt.xlabel("time")
+plt.ylabel("activity")
+plt.show()
 
